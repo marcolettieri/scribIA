@@ -43,7 +43,7 @@ Every AI-assisted workflow has the same problem: code evolves fast, documentatio
 ### Quick install
 
 ```bash
-git clone https://github.com/your-username/scribia.git
+git clone https://github.com/marcolettieri/scribia.git
 cd scribia
 ./install.sh
 ```
@@ -218,7 +218,7 @@ CHANGELOG.md
 
 ### Graphify
 
-Triggers a `/graphify . --update --wiki` run after documentation is updated. Requires the [graphify](https://github.com/your-username/graphify) Claude Code skill. When used via `/scribia` in Claude Code, Scribia invokes graphify automatically. In CLI mode it prints the command to run manually.
+Triggers a `/graphify . --update --wiki` run after documentation is updated. Requires the graphify Claude Code skill. When used via `/scribia` in Claude Code, Scribia invokes graphify automatically. In CLI mode it prints the command to run manually.
 
 ### LLM Wiki
 
