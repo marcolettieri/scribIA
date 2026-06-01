@@ -44,10 +44,10 @@ dev = [
 scribia = "scribia.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/mlettieri/scribia"
-Repository = "https://github.com/mlettieri/scribia"
-Issues = "https://github.com/mlettieri/scribia/issues"
-Changelog = "https://github.com/mlettieri/scribia/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/marcolettieri/scribia"
+Repository = "https://github.com/marcolettieri/scribia"
+Issues = "https://github.com/marcolettieri/scribia/issues"
+Changelog = "https://github.com/marcolettieri/scribia/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -6,7 +6,7 @@ reports, documentation improvements, new backend plugins, and core features.
 ## Development setup
 
 ```bash
-git clone https://github.com/mlettieri/scribia.git
+git clone https://github.com/marcolettieri/scribia.git
 cd scribia
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"

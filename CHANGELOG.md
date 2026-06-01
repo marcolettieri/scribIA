@@ -39,6 +39,6 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Interactive `install.sh`: backend selection, knowledge backends, update mode, hook setup
 - `scribia.yaml` configuration with deep-merge defaults
 
-[Unreleased]: https://github.com/mlettieri/scribia/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/mlettieri/scribia/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/mlettieri/scribia/releases/tag/v0.1.0
+[Unreleased]: https://github.com/marcolettieri/scribia/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/marcolettieri/scribia/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/marcolettieri/scribia/releases/tag/v0.1.0
