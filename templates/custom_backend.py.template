@@ -1,0 +1,73 @@
+"""
+Custom backend template for autodoc.
+
+Instructions:
+1. Copy this file to plugins/<your_name>.py
+2. Set the `name` class attribute to match your autodoc.yaml backend value
+3. Implement the four required methods
+4. Set `backend: <your_name>` (or add to knowledge_backends) in autodoc.yaml
+
+No modifications to autodoc core code required.
+"""
+from __future__ import annotations
+
+from autodoc.backends.base import BackendPlugin
+from autodoc.engine.models import ChangeSet
+
+
+class MyCustomBackend(BackendPlugin):
+
+    # Must match the name used in autodoc.yaml
+    name = "my_custom"
+
+    def __init__(self) -> None:
+        # Initialize instance variables here
+        pass
+
+    def init(self, config: dict) -> None:
+        """
+        Called once before update().
+        Use config to read backend-specific settings from autodoc.yaml.
+        Must be idempotent.
+
+        Example config keys:
+            config.get("my_custom", {}).get("api_url")
+        """
+        pass
+
+    def update(self, changeset: ChangeSet) -> list[str]:
+        """
+        Process the changeset and write/push documentation.
+
+        changeset.file_changes       — raw file-level changes
+        changeset.semantic_entities  — extracted APIs, classes, models, etc.
+
+        Return a list of resource identifiers (file paths, URLs, node IDs)
+        for everything you created or updated.
+        """
+        updated: list[str] = []
+
+        for entity in changeset.semantic_entities:
+            # entity.name          — identifier (function name, class name, endpoint)
+            # entity.entity_type   — EntityType enum
+            # entity.change_type   — ChangeType enum (added/modified/deleted/renamed)
+            # entity.file_path     — source file path
+            # entity.description   — optional description (may be empty)
+            # entity.metadata      — dict with matched_line and other context
+            pass
+
+        return updated
+
+    def persist(self) -> None:
+        """
+        Flush buffered writes, commit transactions, close connections.
+        Called once after update() completes.
+        """
+        pass
+
+    def query(self, question: str) -> str:
+        """
+        Optional: answer natural-language questions from the knowledge base.
+        Raise NotImplementedError if not supported (default behavior from base class).
+        """
+        raise NotImplementedError(f"'{self.name}' backend does not support querying.")

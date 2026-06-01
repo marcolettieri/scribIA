@@ -1,0 +1,45 @@
+MIT License with Attribution Requirement
+Copyright (c) 2026 M. Lettieri
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+1. STANDARD MIT CONDITION
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+2. ATTRIBUTION REQUIREMENT FOR NON-PERSONAL USE
+   Any use of the Software outside a strictly personal context requires clear,
+   visible attribution to the original author. Non-personal use includes, but
+   is not limited to:
+
+   - integration into a commercial product or service
+   - deployment within an organization, team, or company
+   - publication in an article, blog post, talk, or course
+   - redistribution as part of another open source project
+
+   Attribution must include all three of the following elements:
+   a) the name of the original author: M. Lettieri
+   b) the name of the project: Scribia
+   c) a link to the original repository: https://github.com/mlettieri/scribia
+      (or the canonical URL at time of use)
+
+   Acceptable forms of attribution: a "Powered by Scribia" notice in the
+   product UI or documentation, a credit line in a README or about page,
+   an acknowledgement in a publication. The attribution must be reasonably
+   visible to end users or readers — not buried in a license file alone.
+
+   Personal use (running Scribia privately on your own machine for your own
+   projects, with no distribution or publication) does not require attribution.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

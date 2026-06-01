@@ -1,0 +1,40 @@
+# autodoc configuration
+# Copy this file to autodoc.yaml in your project root.
+# All fields are optional — defaults are shown below.
+
+# Primary documentation backend.
+# Built-ins: markdown | graphify | llm_wiki
+# Custom: add a .py file to plugins/ and set its name here.
+backend: markdown
+
+# Additional knowledge backends to run after the primary backend.
+# Each entry is a backend name (same options as above).
+# knowledge_backends:
+#   - llm_wiki
+#   - graphify
+
+# Directory where markdown/API docs are written (relative to project root).
+docs_dir: docs
+
+# Changelog file to prepend entries to.
+changelog: CHANGELOG.md
+
+# Language for generated documentation.
+# "auto" attempts to detect from CLAUDE.md or system locale.
+language: auto
+
+# exclude_patterns: file globs to ignore during diff analysis.
+exclude_patterns:
+  - "test_*"
+  - "*.test.ts"
+  - "*.spec.*"
+  - "migrations/*"
+
+# Graphify backend options (only used when backend or knowledge_backends includes "graphify").
+graphify:
+  flags: "--update --wiki --no-viz"
+  target_path: "."
+
+# LLM Wiki backend options (only used when backend or knowledge_backends includes "llm_wiki").
+llm_wiki:
+  output_dir: wiki
