@@ -20,6 +20,15 @@ Analyze repository changes and update only the documentation sections that were 
 /scribia state reset              # move checkpoint to current HEAD
 /scribia config                   # show effective configuration
 /scribia backends                 # list available backends
+
+# Conversational context capture (Approach A)
+/scribia note "text"              # queue an architectural note for the next run
+
+# Session log processing (Approach B)
+/scribia session show             # print current session log
+/scribia session apply            # process session log into docs, then clear it
+/scribia session clear            # clear the session log without processing
+
 /scribia -h                       # print this usage block
 ```
 
@@ -52,6 +61,35 @@ Map /scribia options to CLI flags:
 - `/scribia config`             → `python3 -m scribia config`
 - `/scribia backends`           → `python3 -m scribia backends`
 - `/scribia` (no args)          → `python3 -m scribia run`
+- `/scribia note "text"`        → `python3 -m scribia note "text"`
+- `/scribia session show`       → `python3 -m scribia session show`
+- `/scribia session apply`      → `python3 -m scribia session apply`
+- `/scribia session clear`      → `python3 -m scribia session clear`
+
+---
+
+### Step 2.5 — Capture conversational context (only for `run` invocations)
+
+Before running the pipeline, review the current conversation for architectural context worth preserving in the documentation. For each meaningful insight — a design decision, a motivation, a constraint, a "why we built it this way" — call:
+
+```bash
+python3 -m scribia note "..."
+```
+
+**What qualifies:**
+- Why a feature was designed a specific way ("chosen over X because Y")
+- Non-obvious constraints or trade-offs ("must be idempotent because Z")
+- Intent behind a new module or API ("this endpoint is the entry point for external plugins")
+- Decisions the code alone doesn't explain
+
+**What to skip:**
+- Trivial remarks, greetings, progress updates
+- Things already obvious from reading the code
+- Implementation details that have no lasting architectural significance
+
+One `scribia note` call per distinct insight. Keep each note to 1-2 sentences. Do NOT paraphrase excessively — preserve the user's intent.
+
+If there is nothing worth capturing, skip this step entirely.
 
 ---
 
@@ -92,10 +130,12 @@ Print a clean summary to the user:
   Commits processed: <from>..<to>
   Files changed: N
   Entities documented: N
+  Context notes captured: N
 
   Updated:
     docs/api/my_module.md
     docs/architecture/data-models.md
+    docs/decisions/YYYY-MM-DD.md     ← only if notes were captured
     CHANGELOG.md
 
   Knowledge backends:
@@ -120,6 +160,28 @@ All backends implement:
 - `update(changeset)` → `list[str]` — write docs, return updated paths
 - `persist()` — flush writes
 - `query(question)` → `str` — optional, for future knowledge retrieval
+
+---
+
+## Conversational Context — Two Approaches
+
+### Approach A — Inline notes (queued for next `run`)
+
+Call `scribia note "..."` during a development session to queue architectural context. Notes are stored in `.scribia/context_queue.jsonl` and are automatically picked up and cleared on the next `scribia run`. They are written to `docs/decisions/YYYY-MM-DD.md` (and `wiki/decisions.md` if llm_wiki is active).
+
+The `/scribia` skill automatically runs Step 2.5 to capture conversational context before the pipeline runs.
+
+### Approach B — Session log (explicit apply)
+
+The Stop hook (installed via `scribia hook install --trigger stop`) captures conversation context after each Claude Code session and writes it to `.scribia/session_log.jsonl`. The user then decides when to incorporate it:
+
+```
+/scribia session show     # review what was captured
+/scribia session apply    # push captured context into docs and clear the log
+/scribia session clear    # discard without processing
+```
+
+To install the Stop hook: `scribia hook install --trigger stop` (or `--global` for all projects).
 
 ---
 

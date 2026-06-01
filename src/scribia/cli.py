@@ -10,6 +10,9 @@ from .backends.loader import list_available, load_backend
 from .config import load_config
 from .engine.analyzer import SemanticAnalyzer
 from .engine.diff import DiffEngine
+from .engine.models import ChangeSet
+from .state import context_queue as ContextQueue
+from .state import session_log as SessionLog
 from .state.manager import StateManager
 
 _GRAPHIFY_MARKER = Path(".scribia") / ".run_graphify"
@@ -46,6 +49,36 @@ def main(argv: list[str] | None = None) -> int:
 
     # -- backends --
     sub.add_parser("backends", help="List all discoverable backends")
+
+    # -- note --
+    note_p = sub.add_parser(
+        "note", help="Queue an architectural note for the next documentation run"
+    )
+    note_p.add_argument("text", help="The note text to queue")
+    note_p.add_argument(
+        "--source",
+        default="manual",
+        help="Source tag stored with the note (default: manual)",
+    )
+
+    # -- session --
+    session_p = sub.add_parser(
+        "session", help="Manage session-captured context notes (Approach B)"
+    )
+    session_sub = session_p.add_subparsers(dest="session_action")
+    session_sub.add_parser("show", help="Print current session log contents")
+    session_sub.add_parser(
+        "apply",
+        help="Process session log as context notes and update docs, then clear the log",
+    )
+    session_sub.add_parser("clear", help="Clear the session log without processing it")
+    session_sub.add_parser(
+        "capture",
+        help=(
+            "Read Claude Code Stop hook JSON from stdin and append session context "
+            "to the session log (called automatically by the Stop hook)"
+        ),
+    )
 
     # -- hook --
     hook_p = sub.add_parser("hook", help="Install or remove Claude Code automatic hook")
@@ -92,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
             trigger=args.trigger,
             global_settings=args.global_settings,
         ),
+        "note": lambda: _cmd_note(args.text, args.source),
+        "session": lambda: _cmd_session(getattr(args, "session_action", None)),
     }
     return dispatch[args.command]()
 
@@ -135,6 +170,12 @@ def _cmd_run(from_commit_override: str | None, *, dry_run: bool, force: bool) ->
 
     changeset = analyzer.analyze(changeset)
     print(f"[scribia] {len(changeset.semantic_entities)} semantic entities extracted")
+
+    # Attach any queued context notes (from `scribia note` calls)
+    queued_notes = ContextQueue.read_and_clear()
+    if queued_notes:
+        changeset.context_notes = queued_notes
+        print(f"[scribia] {len(queued_notes)} context note(s) queued")
 
     if dry_run:
         print("\n[scribia] DRY RUN — changeset:\n")
@@ -305,6 +346,116 @@ def _cmd_hook(action: str, *, trigger: str, global_settings: bool) -> int:
         settings_path.write_text(json.dumps(settings, indent=2), encoding="utf-8")
         print(f"[scribia] Hook removed from {settings_path}")
 
+    return 0
+
+
+def _cmd_note(text: str, source: str = "manual") -> int:
+    """Queue a context note for the next `scribia run`."""
+    if not Path(".scribia").exists():
+        print(
+            "[scribia] No .scribia directory found. Run `scribia init` first.",
+            file=sys.stderr,
+        )
+        return 1
+    ContextQueue.append(text, source=source)
+    print(f"[scribia] Note queued (will be included in next `scribia run`):\n  {text}")
+    return 0
+
+
+def _cmd_session(action: str | None) -> int:
+    """Dispatch session subcommands."""
+    if action is None or action == "show":
+        return _cmd_session_show()
+    if action == "apply":
+        return _cmd_session_apply()
+    if action == "clear":
+        return _cmd_session_clear()
+    if action == "capture":
+        return _cmd_session_capture()
+    print(f"[scribia] Unknown session action: {action}", file=sys.stderr)
+    return 1
+
+
+def _cmd_session_show() -> int:
+    notes = SessionLog.read_all()
+    if not notes:
+        print("[scribia] Session log is empty.")
+        return 0
+    print(f"[scribia] Session log — {len(notes)} note(s):\n")
+    for i, note in enumerate(notes, 1):
+        ts = note.timestamp[:16].replace("T", " ")
+        print(f"[{i}] ({ts}) [{note.source}]\n{note.text}\n")
+    return 0
+
+
+def _cmd_session_apply() -> int:
+    """Process all session log notes into documentation, then clear the log."""
+    notes = SessionLog.read_all()
+    if not notes:
+        print("[scribia] Session log is empty. Nothing to apply.")
+        return 0
+
+    config = load_config()
+    state = StateManager()
+    diff_engine = DiffEngine()
+
+    to_commit = diff_engine.current_commit()
+    from_commit = state.last_commit() or to_commit
+
+    import datetime as _dt
+
+    changeset = ChangeSet(
+        from_commit=from_commit,
+        to_commit=to_commit,
+        timestamp=_dt.datetime.now(_dt.UTC).isoformat(),
+        context_notes=notes,
+    )
+
+    print(f"[scribia] Applying {len(notes)} session note(s) to documentation...")
+
+    backend_names: list[str] = [config["backend"]]
+    for kb in config.get("knowledge_backends", []):
+        if kb and kb not in backend_names:
+            backend_names.append(kb)
+
+    all_updated: list[str] = []
+    for name in backend_names:
+        try:
+            backend = load_backend(name)
+            backend.init(config)
+            updated = backend.update(changeset)
+            backend.persist()
+            all_updated.extend(updated)
+        except ValueError as exc:
+            print(f"[scribia] Warning: {exc}", file=sys.stderr)
+
+    cleared = SessionLog.clear()
+    print(f"[scribia] Session log cleared ({cleared} entries).")
+
+    if all_updated:
+        print(f"\n[scribia] Updated {len(all_updated)} document(s):")
+        for path in all_updated:
+            print(f"  {path}")
+    else:
+        print("\n[scribia] No documentation sections required updating.")
+
+    return 0
+
+
+def _cmd_session_clear() -> int:
+    count = SessionLog.clear()
+    if count:
+        print(f"[scribia] Session log cleared ({count} entries).")
+    else:
+        print("[scribia] Session log was already empty.")
+    return 0
+
+
+def _cmd_session_capture() -> int:
+    """Called by the Stop hook — reads hook JSON from stdin, writes to session log."""
+    count = SessionLog.capture_from_hook()
+    if count:
+        print(f"[scribia] Session captured ({count} turns → session log).")
     return 0
 
 

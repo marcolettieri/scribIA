@@ -17,6 +17,8 @@
 
 Scribia is an incremental documentation system for AI-assisted development. When you run `/scribia` in Claude Code (or `scribia run` in your terminal), it detects what changed since the last run, extracts semantic entities (APIs, classes, models, config), updates only the impacted documentation sections, and optionally syncs a knowledge graph (Graphify) or LLM wiki.
 
+It also captures **conversational context** — the architectural decisions, motivations, and design rationale that you explain during development — and writes them to `docs/decisions/`. Code alone doesn't explain *why*; Scribia does.
+
 It never regenerates everything from scratch. It never deletes existing content. It only patches what changed.
 
 ---
@@ -30,6 +32,7 @@ Every AI-assisted workflow has the same problem: code evolves fast, documentatio
 - **Backend-agnostic** — Markdown, Graphify, LLM Wiki, or your own plugin.
 - **Claude Code skill** — invoke with `/scribia` directly from your AI session.
 - **Standalone CLI** — works without Claude too: `scribia run`.
+- **Context-aware** — captures architectural decisions from your conversations, not just code changes.
 
 ---
 
@@ -94,6 +97,12 @@ This scaffolds the `docs/` directory, creates `.scribia/state.json` with the cur
 /scribia state reset              # move checkpoint to current HEAD
 /scribia config                   # show effective configuration
 /scribia backends                 # list available backends
+
+# Conversational context capture
+/scribia note "why we chose X over Y"   # queue an architectural note
+/scribia session show                   # review session-captured context
+/scribia session apply                  # push session context into docs
+/scribia session clear                  # discard session log
 ```
 
 ### In terminal
@@ -107,6 +116,13 @@ scribia state show
 scribia state reset
 scribia config
 scribia backends
+
+# Context notes
+scribia note "rationale text"     # queue a note for next run
+scribia session show              # review session log
+scribia session apply             # apply session log to docs
+scribia session clear             # clear session log
+scribia session capture           # read Stop hook stdin → session log
 ```
 
 ---
@@ -158,6 +174,56 @@ State is stored in `.scribia/state.json`:
   "run_count": 7
 }
 ```
+
+---
+
+## Conversational Context Capture
+
+Code captures *what* was built. Scribia also captures *why*.
+
+During an AI-assisted session, you often explain design decisions, trade-offs, and architectural intent that never makes it into the code. Scribia provides two ways to preserve that context in `docs/decisions/`.
+
+### Approach A — Inline notes
+
+Queue a note manually (or the `/scribia` skill does it automatically from the conversation):
+
+```bash
+scribia note "chose event-sourcing over CRUD because we need full audit trail"
+scribia note "the plugin loader uses importlib instead of exec to preserve traceback info"
+```
+
+Notes are staged in `.scribia/context_queue.jsonl` and flushed into docs on the next `scribia run`. The `/scribia` Claude Code skill automatically extracts architectural insights from the current conversation before running the pipeline.
+
+### Approach B — Session log
+
+Install a Stop hook to capture context automatically at the end of each Claude Code session:
+
+```bash
+scribia hook install --trigger stop           # project-local
+scribia hook install --trigger stop --global  # all projects
+```
+
+When the session ends, the hook writes conversation context to `.scribia/session_log.jsonl`. Review and apply it when you're ready:
+
+```bash
+scribia session show    # inspect what was captured
+scribia session apply   # push into docs/decisions/ and clear log
+scribia session clear   # discard without applying
+```
+
+### Where decisions are written
+
+Both approaches write to the same destination:
+
+```
+docs/
+  decisions/
+    2026-06-01.md    # one file per day, one section per commit
+wiki/
+  decisions.md       # if llm_wiki backend is active
+```
+
+Sections are bounded by scribia markers so they are never overwritten by subsequent runs — only appended.
 
 ---
 
@@ -259,11 +325,14 @@ docs/
     service.md
   architecture/
     data-models.md             # data model registry
+  decisions/
+    2026-06-01.md              # architectural context per day/commit
   configuration.md             # config reference
 CHANGELOG.md                   # prepend-only changelog
 wiki/                          # only if llm_wiki backend enabled
   index.md
   my_module.md
+  decisions.md                 # all session context notes
 ```
 
 ---
@@ -297,7 +366,9 @@ scribia/
         │   ├── graphify.py    # Graphify backend
         │   └── llm_wiki.py    # LLM Wiki backend
         └── state/
-            └── manager.py     # .scribia/state.json checkpoint
+            ├── manager.py     # .scribia/state.json checkpoint
+            ├── context_queue.py  # .scribia/context_queue.jsonl (Approach A)
+            └── session_log.py    # .scribia/session_log.jsonl (Approach B)
 ```
 
 ---

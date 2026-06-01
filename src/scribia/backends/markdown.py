@@ -34,7 +34,7 @@ class MarkdownBackend(BackendPlugin):
         self._docs_dir = Path(config.get("docs_dir", "docs"))
         self._changelog = Path(config.get("changelog", "CHANGELOG.md"))
 
-        for sub in ("api", "features", "architecture"):
+        for sub in ("api", "features", "architecture", "decisions"):
             (self._docs_dir / sub).mkdir(parents=True, exist_ok=True)
 
         index = self._docs_dir / "index.md"
@@ -75,6 +75,9 @@ class MarkdownBackend(BackendPlugin):
             self._update_model_docs(by_type["model"], changeset)
         if by_type["config"]:
             self._update_config_docs(by_type["config"])
+
+        if changeset.context_notes:
+            self._update_decisions(changeset)
 
         self._update_changelog(changeset)
 
@@ -153,6 +156,27 @@ class MarkdownBackend(BackendPlugin):
 
         SafeWriter.prepend_to_changelog(self._changelog, "\n".join(lines))
         self._updated.append(str(self._changelog))
+
+    def _update_decisions(self, changeset: ChangeSet) -> None:
+        date = datetime.now().strftime("%Y-%m-%d")
+        short = changeset.to_commit[:7]
+        doc_path = self._docs_dir / "decisions" / f"{date}.md"
+        section_id = f"decisions-{short}"
+
+        lines: list[str] = []
+        for note in changeset.context_notes:
+            ts = note.timestamp[:16].replace("T", " ")
+            source_tag = f" _({note.source})_" if note.source != "manual" else ""
+            lines.append(f"- {note.text}{source_tag}  \n  _{ts}_")
+
+        content = "\n\n".join(lines)
+
+        if not SafeWriter.update_section(doc_path, section_id, content):
+            header = f"# Architectural Decisions — {date}\n\n> Commit `{short}`\n\n"
+            SafeWriter.write_new(doc_path, header)
+            SafeWriter.append_section(doc_path, section_id, content)
+
+        self._updated.append(str(doc_path))
 
     def persist(self) -> None:
         pass  # All writes are immediate

@@ -6,6 +6,18 @@ from enum import StrEnum
 from typing import Any
 
 
+@dataclass
+class ContextNote:
+    """A human-authored note capturing architectural intent or design rationale."""
+
+    timestamp: str
+    text: str
+    source: str = "manual"  # "manual" | "session" | "hook"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"timestamp": self.timestamp, "text": self.text, "source": self.source}
+
+
 class ChangeType(StrEnum):
     ADDED = "added"
     MODIFIED = "modified"
@@ -75,9 +87,13 @@ class ChangeSet:
     file_changes: list[FileChange] = field(default_factory=list)
     semantic_entities: list[SemanticEntity] = field(default_factory=list)
     raw_diff_stat: str = ""
+    context_notes: list[ContextNote] = field(default_factory=list)
 
     def has_changes(self) -> bool:
         return bool(self.file_changes)
+
+    def has_content(self) -> bool:
+        return bool(self.file_changes or self.context_notes)
 
     def significant_changes(self) -> list[FileChange]:
         return [f for f in self.file_changes if f.is_significant()]
@@ -90,6 +106,7 @@ class ChangeSet:
             "file_changes": [f.to_dict() for f in self.file_changes],
             "semantic_entities": [e.to_dict() for e in self.semantic_entities],
             "raw_diff_stat": self.raw_diff_stat,
+            "context_notes": [n.to_dict() for n in self.context_notes],
         }
 
     def to_json(self) -> str:

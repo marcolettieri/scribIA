@@ -69,6 +69,9 @@ class LLMWikiBackend(BackendPlugin):
             index_path = self._output_dir / "index.md"
             SafeWriter.update_section(index_path, "index", "\n".join(index_rows))
 
+        if changeset.context_notes:
+            self._update_decisions_wiki(changeset)
+
         return self._updated
 
     def _render_module(
@@ -87,6 +90,30 @@ class LLMWikiBackend(BackendPlugin):
             lines.append(f"| `{e.name}` | {e.entity_type.value} | {verb} |")
         lines.append("")
         return "\n".join(lines)
+
+    def _update_decisions_wiki(self, changeset: ChangeSet) -> None:
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
+        short = changeset.to_commit[:7]
+        wiki_path = self._output_dir / "decisions.md"
+        section_id = f"decisions-{short}"
+
+        lines = [
+            f"**Updated**: {ts}  ",
+            f"**Commit**: `{short}`",
+            "",
+        ]
+        for note in changeset.context_notes:
+            source_tag = f" [{note.source}]" if note.source != "manual" else ""
+            lines.append(f"- {note.text}{source_tag}")
+
+        content = "\n".join(lines)
+
+        if not SafeWriter.update_section(wiki_path, section_id, content):
+            header = "# Architectural Decisions\n\nContext notes captured during development sessions.\n\n"
+            SafeWriter.write_new(wiki_path, header)
+            SafeWriter.append_section(wiki_path, section_id, content)
+
+        self._updated.append(str(wiki_path))
 
     def persist(self) -> None:
         pass  # Writes are immediate
