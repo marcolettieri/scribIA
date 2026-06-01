@@ -158,22 +158,25 @@ def _cmd_run(from_commit_override: str | None, *, dry_run: bool, force: bool) ->
     print(f"[scribia] Diff range: {from_commit[:7]}..{to_commit[:7]}")
 
     changeset = diff_engine.get_changeset(from_commit, to_commit)
-    if not changeset.has_changes():
-        print("[scribia] No file changes in range.")
-        _save_checkpoint(state, to_commit, "no changes", config)
-        return 0
 
-    sig = changeset.significant_changes()
-    print(f"[scribia] {len(changeset.file_changes)} files changed ({len(sig)} significant)")
-
-    changeset = analyzer.analyze(changeset)
-    print(f"[scribia] {len(changeset.semantic_entities)} semantic entities extracted")
-
-    # Attach any queued context notes (from `scribia note` calls)
+    # Attach any queued context notes before deciding whether to bail out
     queued_notes = ContextQueue.read_and_clear()
     if queued_notes:
         changeset.context_notes = queued_notes
         print(f"[scribia] {len(queued_notes)} context note(s) queued")
+
+    if not changeset.has_content():
+        print("[scribia] No file changes in range and no context notes queued.")
+        _save_checkpoint(state, to_commit, "no changes", config)
+        return 0
+
+    if changeset.has_changes():
+        sig = changeset.significant_changes()
+        print(f"[scribia] {len(changeset.file_changes)} files changed ({len(sig)} significant)")
+        changeset = analyzer.analyze(changeset)
+        print(f"[scribia] {len(changeset.semantic_entities)} semantic entities extracted")
+    else:
+        print("[scribia] No file changes — processing context notes only.")
 
     if dry_run:
         print("\n[scribia] DRY RUN — changeset:\n")
