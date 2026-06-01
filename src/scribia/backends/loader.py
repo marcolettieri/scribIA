@@ -59,7 +59,7 @@ def load_backend(name: str, plugin_dirs: list[Path] | None = None) -> BackendPlu
 def list_available(plugin_dirs: list[Path] | None = None) -> dict[str, str]:
     """Return {name: source} for all discoverable backends."""
     result: dict[str, str] = {n: "built-in" for n in BUILTIN_BACKENDS}
-    for plugin_dir in (plugin_dirs or [_DEFAULT_PLUGIN_DIR]):
+    for plugin_dir in plugin_dirs or [_DEFAULT_PLUGIN_DIR]:
         if not plugin_dir.exists():
             continue
         for candidate in plugin_dir.glob("*.py"):

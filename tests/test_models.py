@@ -1,5 +1,5 @@
 import json
-import pytest
+
 from scribia.engine.models import ChangeSet, ChangeType, EntityType, FileChange, SemanticEntity
 
 

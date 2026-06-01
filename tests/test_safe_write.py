@@ -1,5 +1,3 @@
-import pytest
-from pathlib import Path
 from scribia.updater.safe_write import SafeWriter
 
 

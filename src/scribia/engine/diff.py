@@ -1,12 +1,23 @@
 from __future__ import annotations
 
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .models import ChangeSet, ChangeType, FileChange
 
-IGNORED_EXTENSIONS = {".lock", ".sum", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".woff", ".woff2"}
+IGNORED_EXTENSIONS = {
+    ".lock",
+    ".sum",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".svg",
+    ".woff",
+    ".woff2",
+}
 IGNORED_DIRS = {"node_modules", ".git", "__pycache__", ".venv", "venv", "dist", "build", ".autodoc"}
 MAX_DIFF_LINES = 300
 
@@ -26,7 +37,7 @@ class DiffEngine:
         return ChangeSet(
             from_commit=from_commit,
             to_commit=to,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             file_changes=file_changes,
             raw_diff_stat=diff_stat,
         )
@@ -57,25 +68,29 @@ class DiffEngine:
                 path = parts[1]
                 if self._should_include(path):
                     add, delete = numstat_map.get(path, (0, 0))
-                    changes.append(FileChange(
-                        path=path,
-                        change_type=ChangeType.ADDED,
-                        additions=add,
-                        deletions=delete,
-                        diff_content=self._get_file_diff(path, from_commit, to_commit),
-                    ))
+                    changes.append(
+                        FileChange(
+                            path=path,
+                            change_type=ChangeType.ADDED,
+                            additions=add,
+                            deletions=delete,
+                            diff_content=self._get_file_diff(path, from_commit, to_commit),
+                        )
+                    )
 
             elif status == "M" and len(parts) >= 2:
                 path = parts[1]
                 if self._should_include(path):
                     add, delete = numstat_map.get(path, (0, 0))
-                    changes.append(FileChange(
-                        path=path,
-                        change_type=ChangeType.MODIFIED,
-                        additions=add,
-                        deletions=delete,
-                        diff_content=self._get_file_diff(path, from_commit, to_commit),
-                    ))
+                    changes.append(
+                        FileChange(
+                            path=path,
+                            change_type=ChangeType.MODIFIED,
+                            additions=add,
+                            deletions=delete,
+                            diff_content=self._get_file_diff(path, from_commit, to_commit),
+                        )
+                    )
 
             elif status == "D" and len(parts) >= 2:
                 path = parts[1]
@@ -86,13 +101,15 @@ class DiffEngine:
                 old_path, new_path = parts[1], parts[2]
                 if self._should_include(new_path):
                     add, delete = numstat_map.get(new_path, (0, 0))
-                    changes.append(FileChange(
-                        path=new_path,
-                        change_type=ChangeType.RENAMED,
-                        old_path=old_path,
-                        additions=add,
-                        deletions=delete,
-                    ))
+                    changes.append(
+                        FileChange(
+                            path=new_path,
+                            change_type=ChangeType.RENAMED,
+                            old_path=old_path,
+                            additions=add,
+                            deletions=delete,
+                        )
+                    )
 
         return changes
 

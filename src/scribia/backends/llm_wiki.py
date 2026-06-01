@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from .base import BackendPlugin
 from ..engine.models import ChangeSet, ChangeType, SemanticEntity
 from ..updater.safe_write import SafeWriter
+from .base import BackendPlugin
 
 
 class LLMWikiBackend(BackendPlugin):
@@ -57,10 +57,7 @@ class LLMWikiBackend(BackendPlugin):
             content = self._render_module(file_path, entities, changeset)
 
             if not SafeWriter.update_section(wiki_path, section_id, content):
-                header = (
-                    f"# Module: `{module}`\n\n"
-                    f"Source: `{file_path}`\n\n"
-                )
+                header = f"# Module: `{module}`\n\nSource: `{file_path}`\n\n"
                 SafeWriter.write_new(wiki_path, header)
                 SafeWriter.append_section(wiki_path, section_id, content)
 

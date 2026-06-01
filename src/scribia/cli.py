@@ -6,10 +6,10 @@ import shutil
 import sys
 from pathlib import Path
 
+from .backends.loader import list_available, load_backend
 from .config import load_config
-from .engine.diff import DiffEngine
 from .engine.analyzer import SemanticAnalyzer
-from .backends.loader import load_backend, list_available
+from .engine.diff import DiffEngine
 from .state.manager import StateManager
 
 _GRAPHIFY_MARKER = Path(".scribia") / ".run_graphify"
@@ -24,12 +24,15 @@ def main(argv: list[str] | None = None) -> int:
 
     # -- run (default when no subcommand) --
     run_p = sub.add_parser("run", help="Run the documentation update pipeline")
-    run_p.add_argument("--from-commit", metavar="SHA",
-                       help="Override start commit (default: last checkpoint)")
-    run_p.add_argument("--dry-run", action="store_true",
-                       help="Print changeset JSON without writing anything")
-    run_p.add_argument("--force", action="store_true",
-                       help="Process even if already at latest checkpoint")
+    run_p.add_argument(
+        "--from-commit", metavar="SHA", help="Override start commit (default: last checkpoint)"
+    )
+    run_p.add_argument(
+        "--dry-run", action="store_true", help="Print changeset JSON without writing anything"
+    )
+    run_p.add_argument(
+        "--force", action="store_true", help="Process even if already at latest checkpoint"
+    )
 
     # -- init --
     sub.add_parser("init", help="Scaffold docs structure and set initial checkpoint")
@@ -96,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
 # ---------------------------------------------------------------------------
 # Subcommand implementations
 # ---------------------------------------------------------------------------
+
 
 def _cmd_run(from_commit_override: str | None, *, dry_run: bool, force: bool) -> int:
     config = load_config()
@@ -241,8 +245,8 @@ def _cmd_hook(action: str, *, trigger: str, global_settings: bool) -> int:
     )
 
     # Safe run command: only executes if .scribia/state.json exists in cwd
-    guard = '[ -f .scribia/state.json ]'
-    run_cmd = f'{guard} && scribia run 2>/dev/null || true'
+    guard = "[ -f .scribia/state.json ]"
+    run_cmd = f"{guard} && scribia run 2>/dev/null || true"
 
     if trigger == "stop":
         hook_event = "Stop"
@@ -260,9 +264,11 @@ def _cmd_hook(action: str, *, trigger: str, global_settings: bool) -> int:
             return 0
         settings = json.loads(settings_path.read_text(encoding="utf-8"))
         hooks = settings.get("hooks", {}).get(hook_event, [])
-        scribia_hooks = [h for h in hooks if any(
-            "scribia" in str(sh.get("command", "")) for sh in h.get("hooks", [])
-        )]
+        scribia_hooks = [
+            h
+            for h in hooks
+            if any("scribia" in str(sh.get("command", "")) for sh in h.get("hooks", []))
+        ]
         if scribia_hooks:
             print(f"[scribia] Hook installed ({hook_event}) in {settings_path}")
         else:
@@ -281,7 +287,8 @@ def _cmd_hook(action: str, *, trigger: str, global_settings: bool) -> int:
 
     # Remove any existing scribia entries first
     event_hooks[:] = [
-        h for h in event_hooks
+        h
+        for h in event_hooks
         if not any("scribia" in str(sh.get("command", "")) for sh in h.get("hooks", []))
     ]
 
@@ -290,7 +297,7 @@ def _cmd_hook(action: str, *, trigger: str, global_settings: bool) -> int:
         settings_path.write_text(json.dumps(settings, indent=2), encoding="utf-8")
         scope = "global" if global_settings else "project-local"
         print(f"[scribia] Hook installed ({hook_event}, {scope}): {settings_path}")
-        print(f"[scribia] Scribia will run automatically after each Claude response.")
+        print("[scribia] Scribia will run automatically after each Claude response.")
         if not global_settings:
             print("[scribia] Tip: use --global to apply to all projects.")
 

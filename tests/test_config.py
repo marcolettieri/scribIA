@@ -1,6 +1,4 @@
-import pytest
-from pathlib import Path
-from scribia.config import _deep_merge, DEFAULT_CONFIG
+from scribia.config import DEFAULT_CONFIG, _deep_merge
 
 
 class TestDeepMerge:

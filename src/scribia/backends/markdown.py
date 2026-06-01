@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from .base import BackendPlugin
 from ..engine.models import ChangeSet, ChangeType, EntityType, SemanticEntity
 from ..updater.safe_write import SafeWriter
+from .base import BackendPlugin
 
 
 class MarkdownBackend(BackendPlugin):
@@ -92,10 +92,7 @@ class MarkdownBackend(BackendPlugin):
             section_id = f"api-{module}"
 
             if not SafeWriter.update_section(doc_path, section_id, section):
-                header = (
-                    f"# API: `{module}`\n\n"
-                    f"> Source: `{file_path}`\n\n"
-                )
+                header = f"# API: `{module}`\n\n> Source: `{file_path}`\n\n"
                 SafeWriter.write_new(doc_path, header)
                 SafeWriter.append_section(doc_path, section_id, section)
 

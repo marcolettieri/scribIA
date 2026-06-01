@@ -4,6 +4,7 @@ from pathlib import Path
 
 try:
     import yaml  # pyyaml
+
     _HAS_YAML = True
 except ImportError:
     _HAS_YAML = False
@@ -32,7 +33,7 @@ _SEARCH_PATHS = [
     Path("scribia.yml"),
     Path(".scribia/config.yaml"),
     Path.home() / ".scribia.yaml",
-    Path("autodoc.yaml"),   # legacy name
+    Path("autodoc.yaml"),  # legacy name
 ]
 
 
@@ -46,9 +47,7 @@ def load_config() -> dict:
 
 def _read_yaml(path: Path) -> dict:
     if not _HAS_YAML:
-        raise RuntimeError(
-            "pyyaml is required to read autodoc.yaml. Run: pip install pyyaml"
-        )
+        raise RuntimeError("pyyaml is required to read autodoc.yaml. Run: pip install pyyaml")
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 

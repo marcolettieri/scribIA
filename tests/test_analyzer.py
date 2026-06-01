@@ -1,7 +1,5 @@
-import pytest
-from scribia.engine.models import ChangeType, EntityType, FileChange
 from scribia.engine.analyzer import SemanticAnalyzer
-from scribia.engine.models import ChangeSet
+from scribia.engine.models import ChangeSet, ChangeType, EntityType, FileChange
 
 
 def _make_file_change(path: str, diff: str, additions: int = 10) -> FileChange:

@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class ChangeType(str, Enum):
+class ChangeType(StrEnum):
     ADDED = "added"
     MODIFIED = "modified"
     DELETED = "deleted"
     RENAMED = "renamed"
 
 
-class EntityType(str, Enum):
+class EntityType(StrEnum):
     API_ENDPOINT = "api_endpoint"
     SERVICE = "service"
     MODULE = "module"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 _STATE_DIR = ".scribia"
@@ -38,7 +38,7 @@ class StateManager:
     def save(self, commit: str, summary: str, backend_config: dict) -> None:
         self._state = {
             "last_commit": commit,
-            "last_run": datetime.now(timezone.utc).isoformat(),
+            "last_run": datetime.now(UTC).isoformat(),
             "last_summary": summary,
             "backend_config": backend_config,
             "run_count": self._state.get("run_count", 0) + 1,
