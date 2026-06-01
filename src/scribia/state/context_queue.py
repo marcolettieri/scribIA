@@ -11,9 +11,7 @@ _QUEUE = Path(".scribia") / "context_queue.jsonl"
 
 def append(text: str, source: str = "manual") -> None:
     """Append a single note to the context queue."""
-    entry = json.dumps(
-        {"timestamp": datetime.now(UTC).isoformat(), "text": text, "source": source}
-    )
+    entry = json.dumps({"timestamp": datetime.now(UTC).isoformat(), "text": text, "source": source})
     _QUEUE.parent.mkdir(parents=True, exist_ok=True)
     with _QUEUE.open("a", encoding="utf-8") as fh:
         fh.write(entry + "\n")

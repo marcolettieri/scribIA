@@ -62,9 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # -- session --
-    session_p = sub.add_parser(
-        "session", help="Manage session-captured context notes (Approach B)"
-    )
+    session_p = sub.add_parser("session", help="Manage session-captured context notes (Approach B)")
     session_sub = session_p.add_subparsers(dest="session_action")
     session_sub.add_parser("show", help="Print current session log contents")
     session_sub.add_parser(
